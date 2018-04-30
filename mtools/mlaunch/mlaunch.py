@@ -26,9 +26,9 @@ from mtools.util.print_table import print_table
 from mtools.version import __version__
 
 try:
-    import queue
+    import Queue as queue
 except ImportError:
-    import Queue
+    import queue
 
 try:
     try:
@@ -580,7 +580,7 @@ class MLaunchTool(BaseCmdLineTool):
 
         # add the 'csrs' parameter as default for MongoDB >= 3.3.0
         if (LooseVersion(current_version) >= LooseVersion("3.3.0") or
-            LooseVersion(current_version) == LooseVersion("0.0.0")):
+                LooseVersion(current_version) == LooseVersion("0.0.0")):
             self.args['csrs'] = True
 
         # construct startup strings
@@ -665,7 +665,7 @@ class MLaunchTool(BaseCmdLineTool):
                         print("adding shards.")
 
                 shard_conns_and_names = list(zip(self.shard_connection_str,
-                                            shard_names))
+                                                 shard_names))
                 while True:
                     try:
                         nshards = con['config']['shards'].count()
@@ -678,7 +678,7 @@ class MLaunchTool(BaseCmdLineTool):
                         try:
                             res = con['admin'].command(SON([('addShard',
                                                              conn_str),
-                                                       ('name', name)]))
+                                                            ('name', name)]))
                         except Exception as e:
                             if self.args['verbose']:
                                 print('%s will retry in a moment.' % e)
@@ -901,8 +901,8 @@ class MLaunchTool(BaseCmdLineTool):
         # mongos
         for node in sorted(self.get_tagged(['mongos'])):
             doc = OrderedDict([('process', 'mongos'), ('port', node),
-                              ('status', 'running'
-                               if self.cluster_running[node] else 'down')])
+                               ('status', 'running'
+                                if self.cluster_running[node] else 'down')])
             print_docs.append(doc)
 
         if len(self.get_tagged(['mongos'])) > 0:
@@ -911,9 +911,9 @@ class MLaunchTool(BaseCmdLineTool):
         # configs
         for node in sorted(self.get_tagged(['config'])):
             doc = OrderedDict([('process', 'config server'),
-                              ('port', node),
-                              ('status', 'running'
-                               if self.cluster_running[node] else 'down')])
+                               ('port', node),
+                               ('status', 'running'
+                                if self.cluster_running[node] else 'down')])
             print_docs.append(doc)
 
         if len(self.get_tagged(['config'])) > 0:
@@ -1147,7 +1147,7 @@ class MLaunchTool(BaseCmdLineTool):
 
         # tag all nodes with 'all'
         self.cluster_tags['all'].extend(list(range(current_port,
-                                              current_port + num_nodes)))
+                                                   current_port + num_nodes)))
 
         # tag all nodes with their port number (as string) and whether
         # they are running
@@ -1175,7 +1175,7 @@ class MLaunchTool(BaseCmdLineTool):
 
         for shard in shard_names:
             port_range = list(range(current_port, current_port +
-                               num_nodes_per_shard))
+                                    num_nodes_per_shard))
 
             # all of these are mongod nodes
             self.cluster_tags['mongod'].extend(port_range)
@@ -1200,10 +1200,10 @@ class MLaunchTool(BaseCmdLineTool):
                     if mrsc.primary:
                         self.cluster_tags['primary'].append(mrsc.primary[1])
                     self.cluster_tags['secondary'].extend(list(map
-                                                          (itemgetter(1),
-                                                           mrsc.secondaries)))
+                                                               (itemgetter(1),
+                                                                mrsc.secondaries)))
                     self.cluster_tags['arbiter'].extend(list(map(itemgetter(1),
-                                                            mrsc.arbiters)))
+                                                                 mrsc.arbiters)))
 
                     # secondaries in cluster_tree (order is now important)
                     self.cluster_tree.setdefault('secondary', [])
@@ -1321,11 +1321,11 @@ class MLaunchTool(BaseCmdLineTool):
         to_start=False).
         """
         threads = []
-        queue = Queue.Queue()
+        q = queue.Queue()
 
         for port in ports:
             threads.append(threading.Thread(target=wait_for_host, args=(
-                port, interval, timeout, to_start, queue,
+                port, interval, timeout, to_start, q,
                 self.ssl_pymongo_options)))
 
         if self.args and 'verbose' in self.args and self.args['verbose']:
@@ -1339,7 +1339,7 @@ class MLaunchTool(BaseCmdLineTool):
             thread.join()
 
         # get all results back and return tuple
-        return tuple(queue.get_nowait() for _ in ports)
+        return tuple(q.get_nowait() for _ in ports)
 
     # --- below here are internal helper methods, do not call externally ---
 
@@ -1471,7 +1471,7 @@ class MLaunchTool(BaseCmdLineTool):
         if self.args and self.args['binarypath']:
             binary = os.path.join(self.args['binarypath'], binary)
         ret = (subprocess.Popen(['%s' % binary, '--help'],
-               stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=False))
+                                stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=False))
 
         out, err = ret.communicate()
         accepted_arguments = []
@@ -1664,7 +1664,7 @@ class MLaunchTool(BaseCmdLineTool):
             print("replica set '%s' initialized." % name)
 
     def _add_user(self, port, name, password, database, roles):
-        con = self.client('localhost:%i'%port)
+        con = self.client('localhost:%i' % port)
         v = con['admin'].command('isMaster').get('maxWireVersion', 0)
         if v >= 7:
             # Until drivers have implemented SCRAM-SHA-256, use old mechanism.
@@ -1673,7 +1673,8 @@ class MLaunchTool(BaseCmdLineTool):
             opts = {}
 
         try:
-            con[database].add_user(name, password=password, roles=roles, **opts)
+            con[database].add_user(
+                name, password=password, roles=roles, **opts)
         except OperationFailure:
             pass
         except TypeError as e:
@@ -1738,9 +1739,9 @@ class MLaunchTool(BaseCmdLineTool):
             # update cluster tags now that we have a primary
             self.cluster_tags['primary'].append(mrsc.primary[1])
             self.cluster_tags['secondary'].extend(list(map(itemgetter(1),
-                                                      mrsc.secondaries)))
+                                                           mrsc.secondaries)))
             self.cluster_tags['arbiter'].extend(list(map(itemgetter(1),
-                                                    mrsc.arbiters)))
+                                                         mrsc.arbiters)))
 
             # secondaries in cluster_tree (order is now important)
             self.cluster_tree.setdefault('secondary', [])
@@ -1797,7 +1798,7 @@ class MLaunchTool(BaseCmdLineTool):
         nextport = self.args['port'] + num_mongos
         for shard in shard_names:
             if (self.args['single']
-                and LooseVersion(current_version) >= LooseVersion("3.6.0")):
+                    and LooseVersion(current_version) >= LooseVersion("3.6.0")):
                 errmsg = " \n * In MongoDB 3.6 and above a Shard must be made up of a replica set. Please use --replicaset option when starting a sharded cluster.*"
                 raise SystemExit(errmsg)
 
@@ -1911,7 +1912,7 @@ class MLaunchTool(BaseCmdLineTool):
             return self._construct_replset(basedir=basedir, portstart=port,
                                            name=name,
                                            num_nodes=list(range(self
-                                                           .args['config'])),
+                                                                .args['config'])),
                                            arbiter=False, extra='--configsvr')
         else:
             datapath = self._create_paths(basedir, name)
